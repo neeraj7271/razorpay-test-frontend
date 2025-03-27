@@ -3,7 +3,7 @@ import axios from 'axios';
 import './App.css';
 
 function App() {
-  const [loading, setLoading] = useState(false);
+  const [loadingStates, setLoadingStates] = useState({}); // Object to manage loading states for each plan
 
   const plans = [
     {
@@ -42,17 +42,19 @@ function App() {
   ];
 
   const createOrder = async (plan) => {
-    setLoading(true);
+    setLoadingStates((prev) => ({ ...prev, [plan.name]: true })); // Set loading for the specific plan
     try {
       const response = await axios.post('https://razorpay-testing-backend.vercel.app/api/create-order', {
         plan: plan.name,
         price: plan.price
       });
       console.log('Order created:', response.data);
+      // Handle successful order creation (e.g., redirect to payment page)
     } catch (error) {
       console.error('Error creating order:', error);
+      alert(`Error creating order for ${plan.name}: ${error.response?.data?.message || 'Unknown error'}`); // Show error message
     } finally {
-      setLoading(false);
+      setLoadingStates((prev) => ({ ...prev, [plan.name]: false })); // Reset loading for the specific plan
     }
   };
 
@@ -79,9 +81,9 @@ function App() {
               <button
                 className="buy-button"
                 onClick={() => createOrder(plan)}
-                disabled={loading}
+                disabled={loadingStates[plan.name]} // Disable button based on individual loading state
               >
-                {loading ? 'Processing...' : 'Buy Now'}
+                {loadingStates[plan.name] ? 'Processing...' : 'Buy Now'}
               </button>
             </div>
           </div>
