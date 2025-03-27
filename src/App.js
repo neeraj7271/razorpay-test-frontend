@@ -186,6 +186,8 @@ function App() {
 
   let plans = getPlans();
 
+  console.log(plans);
+
 
   return (
     <div className="container">
