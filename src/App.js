@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import './App.css';
 import axios from 'axios';
+import dotenv from 'dotenv';
+import Razorpay from 'razorpay';
 
 function App() {
   const [loadingStates, setLoadingStates] = useState({}); // Object to manage loading states for each plan
@@ -79,6 +81,7 @@ function App() {
       };
 
       const rzp1 = new Razorpay(options);
+      alert("Payment window will open in 5 seconds");
       rzp1.open(); // 🚀 Automatically open the payment window
 
 
