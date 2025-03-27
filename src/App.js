@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './App.css';
 import axios from 'axios';
-import Razorpay from 'razorpay';
+
 
 function App() {
   const [loadingStates, setLoadingStates] = useState({}); // Object to manage loading states for each plan
@@ -54,7 +54,7 @@ function App() {
       // Handle successful order creation (e.g., redirect to payment page)
 
       const options = {
-        key: process.env.RAZORPAY_KEY_ID, // Replace with actual Razorpay Key
+        key: rzp_test_dWLBx9Ob7rYIdJ, // Replace with actual Razorpay Key
         amount: data.amount, // Amount in paise
         currency: "INR",
         name: "Neeraj Suman",
@@ -79,7 +79,7 @@ function App() {
         }
       };
 
-      const rzp1 = new Razorpay(options);
+      const rzp1 = new window.Razorpay(options);
       alert("Payment window will open in 5 seconds");
       rzp1.open(); // 🚀 Automatically open the payment window
 
