@@ -64,44 +64,22 @@ function App() {
 
       // Open Razorpay payment window
       const options = {
-        key: "rzp_test_hcBEyLK2rKpWkS", // Your Razorpay key ID
-        amount: data.amount, // Amount in smallest currency unit
+        //key: "YOUR_RAZORPAY_KEY_ID", // Replace with your actual Razorpay key
+        amount: data.amount, // Razorpay requires amount in paise
         currency: "INR",
-        name: "Your Company Name", // Your company name
-        description: "Order Description", // Description of the order
-        order_id: data.id, // Use the order ID received from the backend
+        name: "Your Company Name",
+        description: `Payment for ${plan.name} Plan`,
+        order_id: data.id, // Use the correct order ID from backend
         handler: async function (response) {
           alert(`Payment successful! Payment ID: ${response.razorpay_payment_id}`);
 
-          // Capture the payment on the backend
-          const captureResponse = await fetch('https://razorpay-testing-backend.vercel.app/api/capture-payment', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              paymentId: response.razorpay_payment_id,
-              amount: data.amount, // Ensure this matches the amount you charged
-              currency: "INR",
-            }),
-          });
-
-          if (!captureResponse.ok) {
-            const errorData = await captureResponse.json();
-            alert(`Error capturing payment: ${errorData.message}`);
-          } else {
-            const captureData = await captureResponse.json();
-            console.log('Payment captured:', captureData);
-            alert('Payment captured successfully!');
-          }
+          // Capture payment
+          await capturePayment(response.razorpay_payment_id, data.amount);
         },
         prefill: {
           name: "Gaurav Kumar",
           email: "gaurav.kumar@example.com",
           contact: "9999999999",
-        },
-        notes: {
-          address: "note value",
         },
         theme: {
           color: "#F37254"
