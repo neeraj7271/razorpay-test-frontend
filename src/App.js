@@ -52,6 +52,35 @@ function App() {
       console.log('Order created:', response.data);
       // Handle successful order creation (e.g., redirect to payment page)
 
+      const options = {
+        key: process.env.RAZORPAY_KEY_ID, // Replace with actual Razorpay Key
+        amount: data.amount, // Amount in paise
+        currency: "INR",
+        name: "Neeraj Suman",
+        description: `Payment for ${plan.name} Plan`,
+        order_id: data.id, // Use the order ID received from backend
+        handler: async function (response) {
+          alert(`Payment successful! Payment ID: ${response.razorpay_payment_id}`);
+
+          // Step 3: Capture the payment on the backend
+          await capturePayment(response.razorpay_payment_id, data.amount);
+        },
+        prefill: {
+          name: "John Doe",
+          email: "john.doe@example.com",
+          contact: "9999999999",
+        },
+        notes: {
+          address: "Customer Address",
+        },
+        theme: {
+          color: "#F37254"
+        }
+      };
+
+      const rzp1 = new Razorpay(options);
+      rzp1.open(); // 🚀 Automatically open the payment window
+
 
 
     } catch (error) {
