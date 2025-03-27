@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import './App.css';
 
 function App() {
@@ -44,16 +43,28 @@ function App() {
   const createOrder = async (plan) => {
     setLoadingStates((prev) => ({ ...prev, [plan.name]: true })); // Set loading for the specific plan
     try {
-      const response = await axios.post('https://razorpay-testing-backend.vercel.app/api/create-order', {
-        receipt: plan.name,
-        amount: parseFloat(plan.price.replace('₹', '')) // Convert price to a number if needed
+      const response = await fetch('https://razorpay-testing-backend.vercel.app/api/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          receipt: plan.name,
+          amount: parseFloat(plan.price.replace('₹', '')) * 100,
+          currency: 'INR',
+        }),
       });
-      console.log('Order created:', response.data);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Order created:', data);
       // Handle successful order creation (e.g., redirect to payment page)
     } catch (error) {
       console.error('Error creating order:', error);
-      console.error('Error response:', error.response); // Log the full error response
-      alert(`Error creating order for ${plan.name}: ${error.response?.data?.message || error.message || 'Unknown error'}`);
+      alert(`Error creating order for ${plan.name}: ${error.message || 'Unknown error'}`);
     } finally {
       setLoadingStates((prev) => ({ ...prev, [plan.name]: false })); // Reset loading for the specific plan
     }
