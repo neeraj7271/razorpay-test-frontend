@@ -51,9 +51,31 @@ function App() {
       });
       console.log('Order created:', response.data);
       // Handle successful order creation (e.g., redirect to payment page)
-
-
-
+      var options = {
+        "key_id": "rzp_test_dWLBx9Ob7rYIdJ",
+        "key_secret": "65ngMLLUKlUggauWummb0G6p",
+        "amount": response.data.amount,
+        "currency": "INR",
+        "name": "Acme Corp",
+        "description": "A Wild Sheep Chase is the third novel by Japanese author  Haruki Murakami",
+        "order_id": response.data.id,
+        handler: function (response) {
+          alert(response.razorpay_payment_id);
+        },
+        "prefill": {
+          "name": "Neeraj",
+          "email": "neeraj@gmail.com",
+          "contact": "9999999999",
+        },
+        "notes": {
+          "address": "note value",
+        },
+        "theme": {
+          "color": "#F37254"
+        }
+      };
+      var rzp1 = new window.Razorpay(options)
+      rzp1.open();
 
     } catch (error) {
       console.error('Error creating order:', error);
@@ -63,6 +85,7 @@ function App() {
       setLoadingStates((prev) => ({ ...prev, [plan.name]: false })); // Reset loading for the specific plan
     }
   };
+
 
   return (
     <div className="container">
