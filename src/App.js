@@ -51,48 +51,121 @@ function App() {
     }
   ];
 
+  // const createOrder = async (plan) => {
+  //   setLoadingStates((prev) => ({ ...prev, [plan.name]: true })); // Set loading for the specific plan
+  //   try {
+  //     console.log('Creating order for:', plan); // Log the plan being processed
+  //     const response = await axios.post('https://razorpay-testing-backend.vercel.app/api/create-order', {
+  //       receipt: plan.name,
+  //       amount: parseFloat(plan.price.replace('₹', '')) // Convert price to a number if needed
+  //     });
+  //     console.log('Order created:', response.data);
+  //     // Handle successful order creation (e.g., redirect to payment page)
+  //     var options = {
+  //       "key_id": "rzp_test_dWLBx9Ob7rYIdJ",
+  //       "key_secret": "65ngMLLUKlUggauWummb0G6p",
+  //       "amount": response.data.amount,
+  //       "currency": "INR",
+  //       "name": "Acme Corp",
+  //       "description": "A Wild Sheep Chase is the third novel by Japanese author  Haruki Murakami",
+  //       "order_id": response.data.id,
+  //       handler: function (response) {
+  //         alert(response.razorpay_payment_id);
+  //       },
+  //       "prefill": {
+  //         "name": "Neeraj",
+  //         "email": "neeraj@gmail.com",
+  //         "contact": "9999999999",
+  //       },
+  //       "notes": {
+  //         "address": "note value",
+  //       },
+  //       "theme": {
+  //         "color": "#F37284"
+  //       }
+  //     };
+  //     var rzp1 = new window.Razorpay(options)
+  //     rzp1.open();
+
+  //   } catch (error) {
+  //     console.error('Error creating order:', error);
+  //     console.error('Error response:', error.response); // Log the full error response
+  //     alert(`Error creating order for ${plan.name}: ${error.response?.data?.message || error.message || 'Unknown error'}`);
+  //   } finally {
+  //     setLoadingStates((prev) => ({ ...prev, [plan.name]: false })); // Reset loading for the specific plan
+  //   }
+  // };
+
+
   const createOrder = async (plan) => {
-    setLoadingStates((prev) => ({ ...prev, [plan.name]: true })); // Set loading for the specific plan
+    setLoadingStates((prev) => ({ ...prev, [plan.name]: true }));
+
     try {
-      console.log('Creating order for:', plan); // Log the plan being processed
-      const response = await axios.post('https://razorpay-testing-backend.vercel.app/api/create-order', {
+      console.log(`Creating order for: ${plan.name}`);
+
+      // ✅ Step 1: Create Order via Backend
+      const { data } = await axios.post('https://razorpay-testing-backend.vercel.app/api/create-order', {
         receipt: plan.name,
-        amount: parseFloat(plan.price.replace('₹', '')) // Convert price to a number if needed
+        amount: parseFloat(plan.price.replace('₹', '')) * 100 // Convert to paise
       });
-      console.log('Order created:', response.data);
-      // Handle successful order creation (e.g., redirect to payment page)
-      var options = {
-        "key_id": "rzp_test_dWLBx9Ob7rYIdJ",
-        "key_secret": "65ngMLLUKlUggauWummb0G6p",
-        "amount": response.data.amount,
-        "currency": "INR",
-        "name": "Acme Corp",
-        "description": "A Wild Sheep Chase is the third novel by Japanese author  Haruki Murakami",
-        "order_id": response.data.id,
-        handler: function (response) {
-          alert(response.razorpay_payment_id);
+
+      console.log("Order created:", data);
+
+      // ✅ Step 2: Define Razorpay Payment Options
+      const options = {
+        key: "rzp_test_dWLBx9Ob7rYIdJ", // ✅ Use env variable for security
+        amount: data.amount,
+        currency: "INR",
+        name: "Neeraj Suman",
+        description: `Payment for ${plan.name} Plan`,
+        order_id: data.id,
+        handler: async function (paymentResponse) {
+          alert(`✅ Payment successful! Payment ID: ${paymentResponse.razorpay_payment_id}`);
+
+          try {
+            // ✅ Step 3: Capture the Payment via Backend
+            const captureResponse = await axios.post('https://razorpay-testing-backend.vercel.app/api/capture-payment', {
+              paymentId: paymentResponse.razorpay_payment_id,
+              orderId: data.id,
+              amount: data.amount,
+              currency: "INR"
+            });
+
+            console.log('Payment captured successfully:', captureResponse.data);
+            alert('✅ Payment captured and confirmed!');
+          } catch (captureError) {
+            console.error('❌ Error capturing payment:', captureError);
+            alert('⚠️ Error capturing payment. Please contact support.');
+          }
         },
-        "prefill": {
-          "name": "Neeraj",
-          "email": "neeraj@gmail.com",
-          "contact": "9999999999",
+        prefill: {
+          name: "John Doe",
+          email: "john.doe@example.com",
+          contact: "9999999999",
         },
-        "notes": {
-          "address": "note value",
+        notes: {
+          address: "Customer Address",
         },
-        "theme": {
-          "color": "#F37254"
+        theme: {
+          color: "#F37254"
         }
       };
-      var rzp1 = new window.Razorpay(options)
+
+      // ✅ Step 4: Initialize Razorpay & Open Payment Window
+      const rzp1 = new window.Razorpay(options);
+
+      rzp1.on('payment.failed', function (response) {
+        console.error("❌ Payment Failed:", response.error);
+        alert(`❌ Payment failed: ${response.error.description}`);
+      });
+
       rzp1.open();
 
     } catch (error) {
-      console.error('Error creating order:', error);
-      console.error('Error response:', error.response); // Log the full error response
-      alert(`Error creating order for ${plan.name}: ${error.response?.data?.message || error.message || 'Unknown error'}`);
+      console.error('❌ Error creating order:', error);
+      alert(`⚠️ Error creating order: ${error.response?.data?.message || error.message}`);
     } finally {
-      setLoadingStates((prev) => ({ ...prev, [plan.name]: false })); // Reset loading for the specific plan
+      setLoadingStates((prev) => ({ ...prev, [plan.name]: false }));
     }
   };
 
