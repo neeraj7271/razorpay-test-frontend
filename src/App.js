@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
 import './App.css';
 
 function App() {
+  const [loading, setLoading] = useState(false);
+
   const plans = [
     {
       name: 'Basic',
-      price: '₹799',
+      price: '₹1',
       features: [
         'Limited Access',
         '1 User',
@@ -15,7 +18,7 @@ function App() {
     },
     {
       name: 'Pro',
-      price: '₹1599',
+      price: '₹2',
       features: [
         'Full Access',
         '5 Users',
@@ -26,7 +29,7 @@ function App() {
     },
     {
       name: 'Enterprise',
-      price: '₹3999',
+      price: '₹3',
       features: [
         'Unlimited Access',
         'Unlimited Users',
@@ -37,6 +40,21 @@ function App() {
       ]
     }
   ];
+
+  const createOrder = async (plan) => {
+    setLoading(true);
+    try {
+      const response = await axios.post('https://razorpay-testing-backend.vercel.app/api/create-order', {
+        plan: plan.name,
+        price: plan.price
+      });
+      console.log('Order created:', response.data);
+    } catch (error) {
+      console.error('Error creating order:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="container">
@@ -58,7 +76,13 @@ function App() {
               </ul>
             </div>
             <div className="card-footer">
-              <button className="buy-button">Buy Now</button>
+              <button
+                className="buy-button"
+                onClick={() => createOrder(plan)}
+                disabled={loading}
+              >
+                {loading ? 'Processing...' : 'Buy Now'}
+              </button>
             </div>
           </div>
         ))}
