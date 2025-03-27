@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
 import axios from 'axios';
-import dotenv from 'dotenv';
 import Razorpay from 'razorpay';
 
 function App() {
