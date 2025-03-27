@@ -136,7 +136,7 @@ function App() {
       // ✅ Step 1: Create Order via Backend
       const { data } = await axios.post("https://razorpay-testing-backend.vercel.app/api/create-order", {
         receipt: plan.name,
-        amount: parseFloat(plan.price.replace("₹", "")) * 100, // Convert to paise
+        amount: parseFloat(plan.price.replace("₹", "")), // Convert to paise
       });
 
       console.log("Order created:", data);
