@@ -46,14 +46,14 @@ function App() {
     try {
       const response = await axios.post('https://razorpay-testing-backend.vercel.app/api/create-order', {
         plan: plan.name,
-        price: plan.price
+        price: parseFloat(plan.price.replace('₹', '')) // Convert price to a number if needed
       });
       console.log('Order created:', response.data);
       // Handle successful order creation (e.g., redirect to payment page)
     } catch (error) {
       console.error('Error creating order:', error);
       console.error('Error response:', error.response); // Log the full error response
-      alert(`Error creating order for ${plan.name}: ${error.response?.data?.message || 'Unknown error'}`); // Show error message
+      alert(`Error creating order for ${plan.name}: ${error.response?.data?.message || error.message || 'Unknown error'}`);
     } finally {
       setLoadingStates((prev) => ({ ...prev, [plan.name]: false })); // Reset loading for the specific plan
     }
