@@ -15,41 +15,46 @@ function App() {
     };
   }, []);
 
-  const plans = [
-    {
-      name: 'Basic',
-      price: '₹1',
-      features: [
-        'Limited Access',
-        '1 User',
-        'Basic Support',
-        '5GB Storage'
-      ]
-    },
-    {
-      name: 'Pro',
-      price: '₹2',
-      features: [
-        'Full Access',
-        '5 Users',
-        'Priority Support',
-        '50GB Storage',
-        'Advanced Analytics'
-      ]
-    },
-    {
-      name: 'Enterprise',
-      price: '₹3',
-      features: [
-        'Unlimited Access',
-        'Unlimited Users',
-        '24/7 Dedicated Support',
-        '1TB Storage',
-        'Custom Integrations',
-        'Advanced Security'
-      ]
-    }
-  ];
+
+
+  // const plans = [
+  //   {
+  //     name: 'Basic',
+  //     planId: 'plan_QBlYx1h4pfIO9r',
+  //     price: '₹1',
+  //     features: [
+  //       'Limited Access',
+  //       '1 User',
+  //       'Basic Support',
+  //       '5GB Storage'
+  //     ]
+  //   },
+  //   {
+  //     name: 'Pro',
+  //     planId: 'plan_QBlZZmYEihtNxF',
+  //     price: '₹2',
+  //     features: [
+  //       'Full Access',
+  //       '5 Users',
+  //       'Priority Support',
+  //       '50GB Storage',
+  //       'Advanced Analytics'
+  //     ]
+  //   },
+  //   {
+  //     name: 'Enterprise',
+  //     planId: 'plan_QBlZwNbWXDZqpn',
+  //     price: '₹3',
+  //     features: [
+  //       'Unlimited Access',
+  //       'Unlimited Users',
+  //       '24/7 Dedicated Support',
+  //       '1TB Storage',
+  //       'Custom Integrations',
+  //       'Advanced Security'
+  //     ]
+  //   }
+  // ];
 
   // const createOrder = async (plan) => {
   //   setLoadingStates((prev) => ({ ...prev, [plan.name]: true })); // Set loading for the specific plan
@@ -172,6 +177,14 @@ function App() {
       setLoadingStates((prev) => ({ ...prev, [plan.name]: false }));
     }
   };
+
+  async function getPlans() {
+
+    const plans = await axios.get("https://razorpay-testing-backend.vercel.app/api/plans");
+    return plans;
+  }
+
+  let plans = getPlans();
 
 
   return (
