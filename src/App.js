@@ -113,7 +113,7 @@ function App() {
 
       // ✅ Step 2: Define Razorpay Payment Options
       const options = {
-        key: "rzp_test_dWLBx9Ob7rYIdJ", // ✅ Replace with your Razorpay Key ID
+        // key: "rzp_test_dWLBx9Ob7rYIdJ", // ✅ Replace with your Razorpay Key ID
         amount: data.amount,
         currency: "INR",
         name: "Neeraj Suman",
