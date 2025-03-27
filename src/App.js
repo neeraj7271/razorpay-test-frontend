@@ -52,6 +52,7 @@ function App() {
       // Handle successful order creation (e.g., redirect to payment page)
     } catch (error) {
       console.error('Error creating order:', error);
+      console.error('Error response:', error.response); // Log the full error response
       alert(`Error creating order for ${plan.name}: ${error.response?.data?.message || 'Unknown error'}`); // Show error message
     } finally {
       setLoadingStates((prev) => ({ ...prev, [plan.name]: false })); // Reset loading for the specific plan
