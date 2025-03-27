@@ -50,7 +50,7 @@ function App() {
         },
         body: JSON.stringify({
           receipt: plan.name,
-          amount: parseFloat(plan.price.replace('₹', '')) * 100,
+          amount: parseFloat(plan.price.replace('₹', '')) * 100, // Amount in smallest currency unit
           currency: 'INR',
         }),
       });
@@ -59,9 +59,57 @@ function App() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data = await response.json(); // Assuming the response contains the order ID
       console.log('Order created:', data);
-      // Handle successful order creation (e.g., redirect to payment page)
+
+      // Open Razorpay payment window
+      const options = {
+        key: "rzp_test_hcBEyLK2rKpWkS", // Your Razorpay key ID
+        amount: data.amount, // Amount in smallest currency unit
+        currency: "INR",
+        name: "Your Company Name", // Your company name
+        description: "Order Description", // Description of the order
+        order_id: data.id, // Use the order ID received from the backend
+        handler: async function (response) {
+          alert(`Payment successful! Payment ID: ${response.razorpay_payment_id}`);
+
+          // Capture the payment on the backend
+          const captureResponse = await fetch('https://razorpay-testing-backend.vercel.app/api/capture-payment', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              paymentId: response.razorpay_payment_id,
+              amount: data.amount, // Ensure this matches the amount you charged
+              currency: "INR",
+            }),
+          });
+
+          if (!captureResponse.ok) {
+            const errorData = await captureResponse.json();
+            alert(`Error capturing payment: ${errorData.message}`);
+          } else {
+            const captureData = await captureResponse.json();
+            console.log('Payment captured:', captureData);
+            alert('Payment captured successfully!');
+          }
+        },
+        prefill: {
+          name: "Gaurav Kumar",
+          email: "gaurav.kumar@example.com",
+          contact: "9999999999",
+        },
+        notes: {
+          address: "note value",
+        },
+        theme: {
+          color: "#F37254"
+        }
+      };
+
+      const rzp1 = new window.Razorpay(options);
+      rzp1.open(); // Open the Razorpay payment window
     } catch (error) {
       console.error('Error creating order:', error);
       alert(`Error creating order for ${plan.name}: ${error.message || 'Unknown error'}`);
