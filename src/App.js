@@ -104,16 +104,16 @@ function App() {
       console.log(`Creating order for: ${plan.name}`);
 
       // ✅ Step 1: Create Order via Backend
-      const { data } = await axios.post('https://razorpay-testing-backend.vercel.app/api/create-order', {
+      const { data } = await axios.post("https://razorpay-testing-backend.vercel.app/api/create-order", {
         receipt: plan.name,
-        amount: parseFloat(plan.price.replace('₹', '')) * 100 // Convert to paise
+        amount: parseFloat(plan.price.replace("₹", "")) * 100, // Convert to paise
       });
 
       console.log("Order created:", data);
 
       // ✅ Step 2: Define Razorpay Payment Options
       const options = {
-        key: "rzp_test_dWLBx9Ob7rYIdJ", // ✅ Use env variable for security
+        key: "rzp_test_dWLBx9Ob7rYIdJ", // ✅ Replace with your Razorpay Key ID
         amount: data.amount,
         currency: "INR",
         name: "Neeraj Suman",
@@ -123,19 +123,24 @@ function App() {
           alert(`✅ Payment successful! Payment ID: ${paymentResponse.razorpay_payment_id}`);
 
           try {
-            // ✅ Step 3: Capture the Payment via Backend
-            const captureResponse = await axios.post('https://razorpay-testing-backend.vercel.app/api/capture-payment', {
+            // ✅ Step 3: Verify Payment Status from Backend
+            const verifyResponse = await axios.post("https://razorpay-testing-backend.vercel.app/api/verify-payment", {
               paymentId: paymentResponse.razorpay_payment_id,
               orderId: data.id,
               amount: data.amount,
               currency: "INR"
             });
 
-            console.log('Payment captured successfully:', captureResponse.data);
-            alert('✅ Payment captured and confirmed!');
-          } catch (captureError) {
-            console.error('❌ Error capturing payment:', captureError);
-            alert('⚠️ Error capturing payment. Please contact support.');
+            if (verifyResponse.data.success) {
+              console.log("✅ Payment verified successfully:", verifyResponse.data);
+              alert("✅ Payment has been received and verified by the backend!");
+            } else {
+              console.warn("⚠️ Payment verification failed:", verifyResponse.data);
+              alert("⚠️ Payment verification failed. Please contact support.");
+            }
+          } catch (verifyError) {
+            console.error("❌ Error verifying payment:", verifyError);
+            alert("⚠️ Error verifying payment. Please try again.");
           }
         },
         prefill: {
@@ -143,23 +148,20 @@ function App() {
           email: "john.doe@example.com",
           contact: "9999999999",
         },
-        notes: {
-          address: "Customer Address",
-        },
-        theme: {
-          color: "#F37254"
-        }
+        notes: { address: "Customer Address" },
+        theme: { color: "#F37254" }
       };
 
       // ✅ Step 4: Initialize Razorpay & Open Payment Window
       const rzp1 = new window.Razorpay(options);
 
-      rzp1.on('payment.failed', function (response) {
+      rzp1.on("payment.failed", function (response) {
         console.error("❌ Payment Failed:", response.error);
         alert(`❌ Payment failed: ${response.error.description}`);
       });
 
       rzp1.open();
+
 
     } catch (error) {
       console.error('❌ Error creating order:', error);
