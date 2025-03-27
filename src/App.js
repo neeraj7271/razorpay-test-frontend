@@ -131,6 +131,8 @@ function App() {
               currency: "INR"
             });
 
+            console.log("Verify Response:", verifyResponse.data);
+
             if (verifyResponse.data.success) {
               console.log("✅ Payment verified successfully:", verifyResponse.data);
               alert("✅ Payment has been received and verified by the backend!");
