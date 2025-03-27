@@ -22,10 +22,16 @@ function App() {
     const fetchPlans = async () => {
       try {
         const response = await axios.get("https://razorpay-testing-backend.vercel.app/api/plans");
-        setPlans(response.data);
+        // Ensure we're setting an array of plans
+        setPlans(response.data.plans || []); // If the plans are nested in a 'plans' property
+        // OR if you need to transform the data:
+        // setPlans(Array.isArray(response.data) ? response.data : []);
+        console.log(response.data.plans);
       } catch (error) {
         console.error("Error fetching plans:", error);
         alert("Failed to load plans. Please refresh the page.");
+        // Set empty array if fetch fails to prevent map error
+        setPlans([]);
       } finally {
         setLoading(false);
       }
