@@ -3,7 +3,9 @@ import './App.css';
 import axios from 'axios';
 
 function App() {
-  const [loadingStates, setLoadingStates] = useState({}); // Object to manage loading states for each plan
+  const [loadingStates, setLoadingStates] = useState({});
+  const [plans, setPlans] = useState([]); // Add state for plans
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -13,6 +15,23 @@ function App() {
     return () => {
       document.body.removeChild(script);
     };
+  }, []);
+
+  // Fetch plans when component mounts
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const response = await axios.get("https://razorpay-testing-backend.vercel.app/api/plans");
+        setPlans(response.data);
+      } catch (error) {
+        console.error("Error fetching plans:", error);
+        alert("Failed to load plans. Please refresh the page.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlans();
   }, []);
 
 
@@ -178,16 +197,10 @@ function App() {
     }
   };
 
-  async function getPlans() {
 
-    const plans = await axios.get("https://razorpay-testing-backend.vercel.app/api/plans");
-    return plans;
+  if (loading) {
+    return <div>Loading plans...</div>;
   }
-
-  let plans = getPlans();
-
-  console.log(plans);
-
 
   return (
     <div className="container">
@@ -212,7 +225,7 @@ function App() {
               <button
                 className="buy-button"
                 onClick={() => createOrder(plan)}
-                disabled={loadingStates[plan.name]} // Disable button based on individual loading state
+                disabled={loadingStates[plan.name]}
               >
                 {loadingStates[plan.name] ? 'Processing...' : 'Buy Now'}
               </button>
