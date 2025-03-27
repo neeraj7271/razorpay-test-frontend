@@ -45,8 +45,8 @@ function App() {
     setLoadingStates((prev) => ({ ...prev, [plan.name]: true })); // Set loading for the specific plan
     try {
       const response = await axios.post('https://razorpay-testing-backend.vercel.app/api/create-order', {
-        plan: plan.name,
-        price: parseFloat(plan.price.replace('₹', '')) // Convert price to a number if needed
+        receipt: plan.name,
+        amount: parseFloat(plan.price.replace('₹', '')) // Convert price to a number if needed
       });
       console.log('Order created:', response.data);
       // Handle successful order creation (e.g., redirect to payment page)
