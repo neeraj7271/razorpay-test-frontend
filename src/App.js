@@ -206,7 +206,7 @@ function App() {
   const handleSubscriptionPayment = async (plan) => {
     console.log(plan);
     const customerDetails = {
-      name: 'Neeraj',
+      name: 'Hemant',
       email: 'neeraj8829sini@gmail.com',
       contact: '9999999999'
     };
@@ -226,7 +226,7 @@ function App() {
 
         // Open Razorpay payment for subscription
         const options = {
-          key: 'YOUR_RAZORPAY_KEY_ID',
+          // key: 'YOUR_RAZORPAY_KEY_ID',
           subscription_id: subscription.id,
           handler: function (response) {
             // Handle successful payment
