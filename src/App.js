@@ -212,6 +212,7 @@ function App() {
     };
 
     const planId = plan.planId;
+    console.log("printing planId", planId);
 
     try {
       const response = await axios.post('https://razorpay-testing-backend.vercel.app/api/create-subscription', {
