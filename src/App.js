@@ -224,10 +224,12 @@ function App() {
 
       if (response.data.success) {
         const subscription = response.data.subscription;
+        console.log("printing subscription", subscription.data);
+        const subscriptionId = subscription.data.id;
 
         // Open Razorpay payment for subscription
         const options = {
-          // key: 'YOUR_RAZORPAY_KEY_ID',
+          key: 'rzp_test_dWLBx9Ob7rYIdJ',
           subscription_id: subscription.id,
           handler: function (response) {
             // Handle successful payment
