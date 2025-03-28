@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import axios from 'axios';
+import SubscriptionModal from './components/SubscriptionModal';
 
 function App() {
   const [loadingStates, setLoadingStates] = useState({});
   const [plans, setPlans] = useState([]); // Add state for plans
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -22,15 +25,11 @@ function App() {
     const fetchPlans = async () => {
       try {
         const response = await axios.get("https://razorpay-testing-backend.vercel.app/api/plans");
-        // Ensure we're setting an array of plans
-        setPlans(response.data.plans || []); // If the plans are nested in a 'plans' property
-        // OR if you need to transform the data:
-        // setPlans(Array.isArray(response.data) ? response.data : []);
+        setPlans(response.data.plans || []);
         console.log(response.data.plans);
       } catch (error) {
         console.error("Error fetching plans:", error);
         alert("Failed to load plans. Please refresh the page.");
-        // Set empty array if fetch fails to prevent map error
         setPlans([]);
       } finally {
         setLoading(false);
@@ -39,93 +38,6 @@ function App() {
 
     fetchPlans();
   }, []);
-
-
-
-  // const plans = [
-  //   {
-  //     name: 'Basic',
-  //     planId: 'plan_QBlYx1h4pfIO9r',
-  //     price: '₹1',
-  //     features: [
-  //       'Limited Access',
-  //       '1 User',
-  //       'Basic Support',
-  //       '5GB Storage'
-  //     ]
-  //   },
-  //   {
-  //     name: 'Pro',
-  //     planId: 'plan_QBlZZmYEihtNxF',
-  //     price: '₹2',
-  //     features: [
-  //       'Full Access',
-  //       '5 Users',
-  //       'Priority Support',
-  //       '50GB Storage',
-  //       'Advanced Analytics'
-  //     ]
-  //   },
-  //   {
-  //     name: 'Enterprise',
-  //     planId: 'plan_QBlZwNbWXDZqpn',
-  //     price: '₹3',
-  //     features: [
-  //       'Unlimited Access',
-  //       'Unlimited Users',
-  //       '24/7 Dedicated Support',
-  //       '1TB Storage',
-  //       'Custom Integrations',
-  //       'Advanced Security'
-  //     ]
-  //   }
-  // ];
-
-  // const createOrder = async (plan) => {
-  //   setLoadingStates((prev) => ({ ...prev, [plan.name]: true })); // Set loading for the specific plan
-  //   try {
-  //     console.log('Creating order for:', plan); // Log the plan being processed
-  //     const response = await axios.post('https://razorpay-testing-backend.vercel.app/api/create-order', {
-  //       receipt: plan.name,
-  //       amount: parseFloat(plan.price.replace('₹', '')) // Convert price to a number if needed
-  //     });
-  //     console.log('Order created:', response.data);
-  //     // Handle successful order creation (e.g., redirect to payment page)
-  //     var options = {
-  //       "key_id": "rzp_test_dWLBx9Ob7rYIdJ",
-  //       "key_secret": "65ngMLLUKlUggauWummb0G6p",
-  //       "amount": response.data.amount,
-  //       "currency": "INR",
-  //       "name": "Acme Corp",
-  //       "description": "A Wild Sheep Chase is the third novel by Japanese author  Haruki Murakami",
-  //       "order_id": response.data.id,
-  //       handler: function (response) {
-  //         alert(response.razorpay_payment_id);
-  //       },
-  //       "prefill": {
-  //         "name": "Neeraj",
-  //         "email": "neeraj@gmail.com",
-  //         "contact": "9999999999",
-  //       },
-  //       "notes": {
-  //         "address": "note value",
-  //       },
-  //       "theme": {
-  //         "color": "#F37284"
-  //       }
-  //     };
-  //     var rzp1 = new window.Razorpay(options)
-  //     rzp1.open();
-
-  //   } catch (error) {
-  //     console.error('Error creating order:', error);
-  //     console.error('Error response:', error.response); // Log the full error response
-  //     alert(`Error creating order for ${plan.name}: ${error.response?.data?.message || error.message || 'Unknown error'}`);
-  //   } finally {
-  //     setLoadingStates((prev) => ({ ...prev, [plan.name]: false })); // Reset loading for the specific plan
-  //   }
-  // };
-
 
   const createOrder = async (plan) => {
     setLoadingStates((prev) => ({ ...prev, [plan.name]: true }));
@@ -194,7 +106,6 @@ function App() {
 
       rzp1.open();
 
-
     } catch (error) {
       console.error('❌ Error creating order:', error);
       alert(`⚠️ Error creating order: ${error.response?.data?.message || error.message}`);
@@ -257,6 +168,22 @@ function App() {
     }
   };
 
+  const handlePlanSelection = (plan) => {
+    setSelectedPlan(plan);
+    setShowModal(true);
+  };
+
+  const handleModalClose = () => {
+    setShowModal(false);
+    setSelectedPlan(null);
+  };
+
+  const handleProceedToPayment = () => {
+    if (selectedPlan) {
+      handleSubscriptionPayment(selectedPlan);
+      setShowModal(false);
+    }
+  };
 
   if (loading) {
     return <div>Loading plans...</div>;
@@ -284,7 +211,7 @@ function App() {
             <div className="card-footer">
               <button
                 className="buy-button"
-                onClick={() => handleSubscriptionPayment(plan)}
+                onClick={() => handlePlanSelection(plan)}
                 disabled={loadingStates[plan.name]}
               >
                 {loadingStates[plan.name] ? 'Processing...' : 'Buy Now'}
@@ -293,6 +220,19 @@ function App() {
           </div>
         ))}
       </div>
+
+      {showModal && selectedPlan && (
+        <SubscriptionModal
+          plan={selectedPlan}
+          onClose={handleModalClose}
+          onProceed={handleProceedToPayment}
+          customerDetails={{
+            name: 'Neeraj Suman',
+            email: 'neeraj8829sini@gmail.com',
+            contact: '9999999999'
+          }}
+        />
+      )}
     </div>
   );
 }
