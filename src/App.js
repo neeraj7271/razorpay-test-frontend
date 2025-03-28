@@ -205,8 +205,8 @@ function App() {
 
   const handleSubscriptionPayment = async (plan) => {
     const customerDetails = {
-      name: 'Customer Name',
-      email: 'customer@example.com',
+      name: 'Neeraj',
+      email: 'neeraj8829sini@gmail.com',
       contact: '9999999999'
     };
 
