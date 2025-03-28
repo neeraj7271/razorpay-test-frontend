@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import axios from 'axios';
 import SubscriptionModal from './components/SubscriptionModal';
+import ResponseSidebar from './components/ResponseSidebar';
 
 function App() {
   const [loadingStates, setLoadingStates] = useState({});
@@ -9,6 +10,8 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [apiResponses, setApiResponses] = useState({});
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -26,6 +29,13 @@ function App() {
       try {
         const response = await axios.get("https://razorpay-testing-backend.vercel.app/api/plans");
         setPlans(response.data.plans || []);
+
+        // Store the response
+        setApiResponses(prev => ({
+          ...prev,
+          "Get Plans": response.data
+        }));
+
         console.log(response.data.plans);
       } catch (error) {
         console.error("Error fetching plans:", error);
@@ -133,6 +143,12 @@ function App() {
         customerId: "cust_QC7ETbBxDPSfZq" // For yearly subscription with monthly payments
       });
 
+      // Store the subscription response
+      setApiResponses(prev => ({
+        ...prev,
+        [`Create Subscription (${plan.name})`]: response.data
+      }));
+
       if (response.data.success) {
         const subscription = response.data.subscription;
         console.log("printing subscription", subscription);
@@ -141,11 +157,16 @@ function App() {
         const options = {
           key: 'rzp_test_dWLBx9Ob7rYIdJ',
           subscription_id: subscription.id,
-          handler: function (response) {
+          handler: function (paymentResponse) {
             // Handle successful payment
-            console.log('Subscription payment successful:', response);
-            alert(`Subscription payment successful! Payment ID: ${response.razorpay_payment_id}`);
-            // You can also verify the payment on your backend here
+            console.log('Subscription payment successful:', paymentResponse);
+            alert(`Subscription payment successful! Payment ID: ${paymentResponse.razorpay_payment_id}`);
+
+            // Store the payment response
+            setApiResponses(prev => ({
+              ...prev,
+              [`Payment Response (${plan.name})`]: paymentResponse
+            }));
           },
           prefill: {
             name: customerDetails.name,
@@ -165,6 +186,15 @@ function App() {
     } catch (error) {
       console.error('Error creating subscription:', error);
       alert("Error creating subscription. Please try again.");
+
+      // Store the error response
+      setApiResponses(prev => ({
+        ...prev,
+        [`Subscription Error (${plan.name})`]: {
+          error: error.message,
+          response: error.response?.data
+        }
+      }));
     }
   };
 
@@ -185,12 +215,27 @@ function App() {
     }
   };
 
+  const handleClearResponses = (clearAll = false) => {
+    if (clearAll) {
+      setApiResponses({});
+    } else {
+      setSidebarOpen(false);
+    }
+  };
+
   if (loading) {
     return <div>Loading plans...</div>;
   }
 
   return (
     <div className="container">
+      <button
+        className="toggle-sidebar-button"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+      >
+        {sidebarOpen ? "Hide Responses" : "Show Responses"}
+      </button>
+
       <h1 className="title">Choose Your Plan</h1>
       <div className="plans">
         {plans.map((plan) => (
@@ -233,6 +278,12 @@ function App() {
           }}
         />
       )}
+
+      <ResponseSidebar
+        isOpen={sidebarOpen}
+        responses={apiResponses}
+        onClose={handleClearResponses}
+      />
     </div>
   );
 }
