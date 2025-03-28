@@ -224,7 +224,7 @@ function App() {
 
       if (response.data.success) {
         const subscription = response.data.subscription;
-        console.log("printing subscription", subscription.data);
+        console.log("printing subscription", subscription);
         // const subscriptionId = subscription.data.id;
 
         // Open Razorpay payment for subscription
