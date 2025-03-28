@@ -206,7 +206,7 @@ function App() {
   const handleSubscriptionPayment = async (plan) => {
     console.log(plan);
     const customerDetails = {
-      name: 'Hemant',
+      name: 'Neeraj Suman',
       email: 'neeraj8829sini@gmail.com',
       contact: '9999999999'
     };
@@ -218,7 +218,8 @@ function App() {
       const response = await axios.post('https://razorpay-testing-backend.vercel.app/api/create-subscription', {
         planId: planId,
         customerDetails: customerDetails,
-        totalCount: 12 // For yearly subscription with monthly payments
+        totalCount: 12,
+        customerId: "cust_QC7ETbBxDPSfZq" // For yearly subscription with monthly payments
       });
 
       if (response.data.success) {
