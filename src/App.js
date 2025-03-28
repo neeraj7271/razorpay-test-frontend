@@ -203,6 +203,52 @@ function App() {
     }
   };
 
+  const handleSubscriptionPayment = async (plan) => {
+    const customerDetails = {
+      name: 'Customer Name',
+      email: 'customer@example.com',
+      contact: '9999999999'
+    };
+
+    const planId = plan.planId;
+
+    try {
+      const response = await axios.post('https://razorpay-testing-backend.vercel.app/api/create-subscription', {
+        planId: planId,
+        customerDetails: customerDetails,
+        totalCount: 12 // For yearly subscription with monthly payments
+      });
+
+      if (response.data.success) {
+        const subscription = response.data.subscription;
+
+        // Open Razorpay payment for subscription
+        const options = {
+          key: 'YOUR_RAZORPAY_KEY_ID',
+          subscription_id: subscription.id,
+          handler: function (response) {
+            // Handle successful payment
+            console.log('Subscription payment successful:', response);
+            // Verify payment on your backend
+          },
+          prefill: {
+            name: customerDetails.name,
+            email: customerDetails.email,
+            contact: customerDetails.contact
+          },
+          theme: {
+            color: '#F37254'
+          }
+        };
+
+        const paymentObject = new window.Razorpay(options);
+        paymentObject.open();
+      }
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+    }
+  };
+
 
   if (loading) {
     return <div>Loading plans...</div>;
@@ -230,7 +276,7 @@ function App() {
             <div className="card-footer">
               <button
                 className="buy-button"
-                onClick={() => createOrder(plan)}
+                onClick={() => handleSubscriptionPayment(plan)}
                 disabled={loadingStates[plan.name]}
               >
                 {loadingStates[plan.name] ? 'Processing...' : 'Buy Now'}
