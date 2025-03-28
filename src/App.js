@@ -225,7 +225,6 @@ function App() {
       if (response.data.success) {
         const subscription = response.data.subscription;
         console.log("printing subscription", subscription);
-        // const subscriptionId = subscription.data.id;
 
         // Open Razorpay payment for subscription
         const options = {
@@ -234,7 +233,8 @@ function App() {
           handler: function (response) {
             // Handle successful payment
             console.log('Subscription payment successful:', response);
-            // Verify payment on your backend
+            alert(`Subscription payment successful! Payment ID: ${response.razorpay_payment_id}`);
+            // You can also verify the payment on your backend here
           },
           prefill: {
             name: customerDetails.name,
@@ -248,9 +248,12 @@ function App() {
 
         const paymentObject = new window.Razorpay(options);
         paymentObject.open();
+      } else {
+        alert("Failed to create subscription. Please try again.");
       }
     } catch (error) {
       console.error('Error creating subscription:', error);
+      alert("Error creating subscription. Please try again.");
     }
   };
 
