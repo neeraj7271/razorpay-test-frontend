@@ -204,6 +204,7 @@ function App() {
   };
 
   const handleSubscriptionPayment = async (plan) => {
+    console.log(plan);
     const customerDetails = {
       name: 'Neeraj',
       email: 'neeraj8829sini@gmail.com',
