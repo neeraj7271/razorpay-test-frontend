@@ -5,12 +5,28 @@
             "src": "package.json",
             "use": "@vercel/static-build",
             "config": {
-                "installCommand": "npm install --legacy-peer-deps",
+                "installCommand": "npm install --production",
                 "buildCommand": "npm run build"
             }
         }
     ],
     "routes": [
+        {
+            "src": "/static/(.*)",
+            "dest": "/static/$1"
+        },
+        {
+            "src": "/favicon.ico",
+            "dest": "/favicon.ico"
+        },
+        {
+            "src": "/manifest.json",
+            "dest": "/manifest.json"
+        },
+        {
+            "src": "/logo(.*).png",
+            "dest": "/logo$1.png"
+        },
         {
             "src": "/(.*)",
             "dest": "/index.html"
