@@ -276,8 +276,6 @@ const UserDashboard = () => {
         }
     };
 
-
-    //! Handle Subscription Payment working fine
     const handleSubscriptionPayment = async (plan) => {
         // Security check - don't allow admin to subscribe
         if (isAdmin()) {
@@ -302,58 +300,22 @@ const UserDashboard = () => {
             const customerDetails = {
                 name: user.name,
                 email: user.email,
-                contact: user.phone || '1234567890'
+                contact: user.phone || '9999999999'
             };
 
-            // Check if customer already exists
-            let customerId;
-            try {
-                const customersResponse = await api.get('/customers', { email: user.email });
-                console.log("Customers response:", customersResponse.data[0].razorpayCustomerId);
-                if (customersResponse && customersResponse.data.length > 0) {
-                    customerId = customersResponse.data[0].razorpayCustomerId; // Assuming the first customer is the one we want
-                }
-            } catch (error) {
-                console.error('Error fetching customers:', error);
-                message.error('Failed to check for existing customer. Please try again.');
-                return;
-            }
-
-            // If customer does not exist, create a new customer
-            console.log("Customer ID:", customerId);
-            if (!customerId) {
-                const createCustomerPayload = {
-                    name: customerDetails.name,
-                    email: customerDetails.email,
-                    contact: customerDetails.contact
-                };
-
-                try {
-                    const createCustomerResponse = await api.post('/create-customer', createCustomerPayload);
-                    console.log("Create customer response:", createCustomerResponse);
-                    if (createCustomerResponse && createCustomerResponse.customer) {
-                        customerId = createCustomerResponse.razorpayCustomerId; // Get the new customer ID
-                    } else {
-                        throw new Error('Failed to create customer');
-                    }
-                } catch (error) {
-                    console.error('Error creating customer:', error);
-                    message.error('Failed to create customer. Please try again.');
-                    return;
-                }
-            }
-
-            // Check if plan has a valid ID
+            // Check if plan has a valid ID - accept various property names
             const planId = plan.planId || plan._id || plan.id || plan.razorpayPlanId;
             if (!planId) {
                 throw new Error('Plan ID is missing');
             }
 
+            console.log(`Creating subscription with planId: ${planId}`);
+
             const payload = {
                 planId: planId,
                 customerDetails: customerDetails,
-                customerId: customerId, // Use the existing or newly created customer ID
                 totalCount: 12, // Monthly payments for a year
+                customerId: user.razorpayCustomerId || null
             };
 
             // Add discount if one is applied
@@ -364,29 +326,97 @@ const UserDashboard = () => {
             // Log the payload for debugging
             console.log("Subscription payload:", payload);
 
+            // Store the payload in API responses for debugging
+            setApiResponses(prev => ({
+                ...prev,
+                "Subscription Request Payload": payload
+            }));
+
+            // Make sure the sidebar is visible
+            setIsSidebarOpen(true);
+
             // Use API utility to handle authentication and fallbacks
-            const response = await api.post('create-subscription', payload);
-            console.log("Subscription created successfully:", response);
+            try {
 
-            if (response.success && response.subscription) {
-                const subscription = response.subscription;
 
-                // Check if Razorpay is loaded
-                if (typeof window.Razorpay !== 'function') {
-                    console.error("Razorpay is not loaded correctly", window.Razorpay);
-                    throw new Error('Razorpay SDK failed to load. Please refresh the page and try again.');
+
+                const response = await api.post('create-subscription', payload);
+                console.log("Subscription created successfully:", response);
+
+                // Store the subscription response
+                setApiResponses(prev => ({
+                    ...prev,
+                    [`Create Subscription (${plan.name})`]: response
+                }));
+
+                if (response.success && response.subscription) {
+                    const subscription = response.subscription;
+
+                    // Check if Razorpay is loaded
+                    if (typeof window.Razorpay !== 'function') {
+                        console.error("Razorpay is not loaded correctly", window.Razorpay);
+                        throw new Error('Razorpay SDK failed to load. Please refresh the page and try again.');
+                    }
+
+                    // Open Razorpay payment for subscription
+                    const options = {
+                        key: 'rzp_test_dWLBx9Ob7rYIdJ', // Replace with your key
+                        subscription_id: subscription.id,
+                        name: 'Your Company',
+                        description: `Subscription for ${plan.name} Plan`,
+                        handler: function (paymentResponse) {
+                            // Handle successful payment
+                            message.success(`Subscription payment successful! Payment ID: ${paymentResponse.razorpay_payment_id}`);
+
+                            // Store the payment response for debugging
+                            setApiResponses(prev => ({
+                                ...prev,
+                                [`Payment Response (${plan.name})`]: paymentResponse
+                            }));
+
+                            // Refresh user data to get updated subscription
+                            fetchUserData();
+                        },
+                        prefill: {
+                            name: customerDetails.name,
+                            email: customerDetails.email,
+                            contact: customerDetails.contact
+                        },
+                        theme: {
+                            color: '#1890ff'
+                        },
+                        modal: {
+                            ondismiss: function () {
+                                message.info('Payment cancelled');
+                            }
+                        }
+                    };
+
+                    try {
+                        const paymentObject = new window.Razorpay(options);
+                        paymentObject.open();
+                    } catch (razorpayError) {
+                        console.error('Error opening Razorpay:', razorpayError);
+                        message.error('Error opening payment form. Please try again.');
+                    }
+                } else {
+                    message.error(response.message || "Failed to create subscription. Please try again.");
                 }
+            } catch (apiError) {
+                console.error("API Error creating subscription:", apiError);
 
-                // Open Razorpay payment for subscription
+                // Fallback to direct Razorpay payment if API calls fail
+                message.info("Using direct Razorpay integration as fallback");
+
                 const options = {
-                    key: 'rzp_test_dWLBx9Ob7rYIdJ', // Replace with your key
-                    subscription_id: subscription.id,
+                    key: 'rzp_test_dWLBx9Ob7rYIdJ',
                     name: 'Your Company',
                     description: `Subscription for ${plan.name} Plan`,
-                    handler: function (paymentResponse) {
-                        // Handle successful payment
-                        message.success(`Subscription payment successful! Payment ID: ${paymentResponse.razorpay_payment_id}`);
-                        fetchUserData(); // Refresh user data to get updated subscription
+                    amount: parseFloat(plan.price) * 100, // Convert to paise
+                    currency: 'INR',
+                    handler: function (response) {
+                        message.success(`Payment successful! Payment ID: ${response.razorpay_payment_id}`);
+                        fetchUserData(); // Refresh user data
                     },
                     prefill: {
                         name: customerDetails.name,
@@ -395,22 +425,24 @@ const UserDashboard = () => {
                     },
                     theme: {
                         color: '#1890ff'
-                    },
-                    modal: {
-                        ondismiss: function () {
-                            message.info('Payment cancelled');
-                        }
                     }
                 };
 
-                const paymentObject = new window.Razorpay(options);
-                paymentObject.open();
-            } else {
-                message.error(response.message || "Failed to create subscription. Please try again.");
+                const rzp = new window.Razorpay(options);
+                rzp.open();
             }
         } catch (error) {
             console.error('Error creating subscription:', error);
             message.error(error.message || "Error creating subscription. Please try again.");
+
+            // Store the error response for debugging
+            setApiResponses(prev => ({
+                ...prev,
+                [`Subscription Error (${plan.name})`]: {
+                    error: error.message,
+                    response: error.response?.data
+                }
+            }));
         } finally {
             setLoadingStates((prev) => ({ ...prev, [plan.name]: false }));
         }
