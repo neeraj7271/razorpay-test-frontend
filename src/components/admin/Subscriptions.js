@@ -1,26 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Box,
+    Card,
     Typography,
-    Paper,
     Button,
-    TextField,
-    InputAdornment,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    IconButton,
+    Input,
+    Modal,
+    Space,
+    Table,
+    Tag,
+    message,
     Alert,
-} from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+    Spin,
+    Row,
+    Col
+} from 'antd';
 import {
-    Search as SearchIcon,
-    Edit as EditIcon,
-    Delete as DeleteIcon,
-    Close as CloseIcon,
-} from '@mui/icons-material';
+    SearchOutlined,
+    EditOutlined,
+    DeleteOutlined,
+    CloseOutlined
+} from '@ant-design/icons';
 import axios from 'axios';
+import './Admin.css';
+
+const { Title, Text } = Typography;
 
 const Subscriptions = () => {
     const [subscriptions, setSubscriptions] = useState([]);
@@ -41,11 +44,19 @@ const Subscriptions = () => {
                     Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
             });
-            setSubscriptions(response.data);
+
+            // Transform data to match Ant Design Table format
+            const formattedData = response.data.map(item => ({
+                ...item,
+                key: item.id // Ant Design Table requires a 'key' prop
+            }));
+
+            setSubscriptions(formattedData);
             setLoading(false);
         } catch (error) {
             console.error('Error fetching subscriptions:', error);
             setLoading(false);
+            message.error('Failed to load subscriptions');
         }
     };
 
@@ -62,175 +73,169 @@ const Subscriptions = () => {
             );
             fetchSubscriptions();
             setOpenDialog(false);
+            message.success('Subscription cancelled successfully');
         } catch (error) {
             setError(error.response?.data?.message || 'Error canceling subscription');
+            message.error('Failed to cancel subscription');
         }
     };
 
     const columns = [
-        { field: 'id', headerName: 'ID', width: 90 },
-        { field: 'customerName', headerName: 'Customer', width: 200 },
-        { field: 'planName', headerName: 'Plan', width: 150 },
         {
-            field: 'status',
-            headerName: 'Status',
-            width: 120,
-            renderCell: (params) => (
-                <Box
-                    sx={{
-                        backgroundColor:
-                            params.value === 'active'
-                                ? '#e8f5e9'
-                                : params.value === 'cancelled'
-                                    ? '#ffebee'
-                                    : '#fff3e0',
-                        color:
-                            params.value === 'active'
-                                ? '#2e7d32'
-                                : params.value === 'cancelled'
-                                    ? '#c62828'
-                                    : '#ef6c00',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        textTransform: 'capitalize',
-                    }}
-                >
-                    {params.value}
-                </Box>
-            ),
+            title: 'ID',
+            dataIndex: 'id',
+            key: 'id',
+            width: 90
         },
         {
-            field: 'startDate',
-            headerName: 'Start Date',
-            width: 180,
-            valueFormatter: (params) => new Date(params.value).toLocaleDateString(),
-        },
-        {
-            field: 'endDate',
-            headerName: 'End Date',
-            width: 180,
-            valueFormatter: (params) => new Date(params.value).toLocaleDateString(),
-        },
-        {
-            field: 'amount',
-            headerName: 'Amount',
-            width: 120,
-            valueFormatter: (params) => `₹${params.value.toLocaleString()}`,
-        },
-        {
-            field: 'actions',
-            headerName: 'Actions',
+            title: 'Customer',
+            dataIndex: 'customerName',
+            key: 'customerName',
             width: 200,
-            sortable: false,
-            renderCell: (params) => (
-                <Box>
-                    <IconButton
-                        size="small"
-                        color="primary"
+            sorter: (a, b) => a.customerName.localeCompare(b.customerName)
+        },
+        {
+            title: 'Plan',
+            dataIndex: 'planName',
+            key: 'planName',
+            width: 150
+        },
+        {
+            title: 'Status',
+            dataIndex: 'status',
+            key: 'status',
+            width: 120,
+            render: (status) => {
+                let color = '';
+                if (status === 'active') {
+                    color = 'green';
+                } else if (status === 'cancelled') {
+                    color = 'red';
+                } else {
+                    color = 'orange';
+                }
+                return (
+                    <Tag color={color} key={status}>
+                        {status.toUpperCase()}
+                    </Tag>
+                );
+            },
+            filters: [
+                { text: 'Active', value: 'active' },
+                { text: 'Cancelled', value: 'cancelled' },
+                { text: 'Pending', value: 'pending' }
+            ],
+            onFilter: (value, record) => record.status === value
+        },
+        {
+            title: 'Start Date',
+            dataIndex: 'startDate',
+            key: 'startDate',
+            width: 180,
+            render: (date) => new Date(date).toLocaleDateString()
+        },
+        {
+            title: 'End Date',
+            dataIndex: 'endDate',
+            key: 'endDate',
+            width: 180,
+            render: (date) => new Date(date).toLocaleDateString()
+        },
+        {
+            title: 'Amount',
+            dataIndex: 'amount',
+            key: 'amount',
+            width: 120,
+            render: (amount) => `₹${amount.toLocaleString()}`
+        },
+        {
+            title: 'Actions',
+            key: 'actions',
+            width: 150,
+            render: (_, record) => (
+                <Space size="small">
+                    <Button
+                        type="text"
+                        icon={<EditOutlined />}
                         onClick={() => {
                             // Handle edit action
                         }}
-                    >
-                        <EditIcon />
-                    </IconButton>
-                    <IconButton
-                        size="small"
-                        color="error"
+                    />
+                    <Button
+                        type="text"
+                        danger
+                        icon={<DeleteOutlined />}
                         onClick={() => {
-                            setSelectedSubscription(params.row);
+                            setSelectedSubscription(record);
                             setOpenDialog(true);
                         }}
-                        disabled={params.row.status !== 'active'}
-                    >
-                        <DeleteIcon />
-                    </IconButton>
-                </Box>
-            ),
+                        disabled={record.status !== 'active'}
+                    />
+                </Space>
+            )
         },
     ];
 
-    const filteredSubscriptions = subscriptions.filter(
-        (subscription) =>
-            subscription.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            subscription.planName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const handleSearch = (e) => {
+        setSearchTerm(e.target.value);
+    };
+
+    const filteredSubscriptions = searchTerm
+        ? subscriptions.filter(
+            (subscription) =>
+                subscription.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                subscription.planName.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        : subscriptions;
 
     return (
-        <Box sx={{ height: 600, width: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h5" component="h2">
-                    Subscriptions
-                </Typography>
-                <TextField
-                    size="small"
-                    placeholder="Search subscriptions..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <SearchIcon />
-                            </InputAdornment>
-                        ),
-                    }}
-                />
-            </Box>
+        <div className="admin-content-container">
+            <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+                <Col>
+                    <Title level={4}>Subscriptions</Title>
+                </Col>
+                <Col>
+                    <Input
+                        placeholder="Search subscriptions..."
+                        prefix={<SearchOutlined />}
+                        value={searchTerm}
+                        onChange={handleSearch}
+                        style={{ width: 250 }}
+                        allowClear
+                    />
+                </Col>
+            </Row>
 
-            <Paper sx={{ height: '100%', width: '100%' }}>
-                <DataGrid
-                    rows={filteredSubscriptions}
+            <Card className="admin-data-card">
+                <Table
                     columns={columns}
-                    pageSize={10}
-                    rowsPerPageOptions={[10]}
-                    checkboxSelection
-                    disableSelectionOnClick
+                    dataSource={filteredSubscriptions}
                     loading={loading}
-                    sx={{
-                        '& .MuiDataGrid-cell:focus': {
-                            outline: 'none',
-                        },
-                    }}
+                    pagination={{ pageSize: 10 }}
+                    scroll={{ x: 1100 }}
+                    rowClassName="subscription-table-row"
                 />
-            </Paper>
+            </Card>
 
-            {/* Cancel Subscription Dialog */}
-            <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-                <DialogTitle>
-                    Cancel Subscription
-                    <IconButton
-                        aria-label="close"
-                        onClick={() => setOpenDialog(false)}
-                        sx={{
-                            position: 'absolute',
-                            right: 8,
-                            top: 8,
-                        }}
-                    >
-                        <CloseIcon />
-                    </IconButton>
-                </DialogTitle>
-                <DialogContent>
-                    {error && (
-                        <Alert severity="error" sx={{ mb: 2 }}>
-                            {error}
-                        </Alert>
-                    )}
-                    <Typography>
-                        Are you sure you want to cancel the subscription for{' '}
-                        {selectedSubscription?.customerName}?
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                        This action cannot be undone.
-                    </Typography>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-                    <Button onClick={handleCancelSubscription} color="error">
+            {/* Cancel Subscription Modal */}
+            <Modal
+                title="Cancel Subscription"
+                open={openDialog}
+                onCancel={() => setOpenDialog(false)}
+                footer={[
+                    <Button key="back" onClick={() => setOpenDialog(false)}>
+                        Cancel
+                    </Button>,
+                    <Button key="submit" danger onClick={handleCancelSubscription}>
                         Confirm Cancellation
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </Box>
+                    </Button>,
+                ]}
+            >
+                {error && <Alert message={error} type="error" style={{ marginBottom: 16 }} />}
+                <p>Are you sure you want to cancel the subscription for {selectedSubscription?.customerName}?</p>
+                <Text type="secondary">This action cannot be undone.</Text>
+            </Modal>
+        </div>
     );
 };
 

@@ -1,20 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Box,
-    Typography,
-    Paper,
-    Button,
-    TextField,
-    InputAdornment,
-} from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import {
-    Search as SearchIcon,
-    Visibility as ViewIcon,
-} from '@mui/icons-material';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import {
     Table,
     Input,
     Tag,
@@ -33,6 +18,10 @@ import {
     InputNumber,
     DatePicker,
     Divider,
+    Typography,
+    Button,
+    Row,
+    Col
 } from 'antd';
 import {
     SearchOutlined,
@@ -48,12 +37,17 @@ import {
     EditOutlined,
     PlusOutlined,
     ExportOutlined,
+    EyeOutlined
 } from '@ant-design/icons';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
+import './Admin.css';
 
 const { Search } = Input;
 const { TabPane } = Tabs;
 const { Option } = Select;
+const { Title, Text } = Typography;
 
 const Customers = () => {
     const navigate = useNavigate();
