@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Base URLs for API endpoints
 const LOCAL_API_URL = 'http://localhost:5000/api';
-const PRODUCTION_API_URL = '    ';
+const PRODUCTION_API_URL = 'https://razorpay-testing-backend.vercel.app/api';
 
 // Helper to get auth token
 const getAuthToken = () => {
