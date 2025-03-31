@@ -1,8 +1,8 @@
 .response-sidebar {
   position: fixed;
   top: 0;
-  right: -400px;
-  width: 400px;
+  right: -450px;
+  width: 450px;
   height: 100%;
   background-color: #1e1e1e; /* VS Code dark background */
   color: #d4d4d4; /* VS Code default text color */
@@ -10,7 +10,8 @@
   transition: right 0.3s ease-in-out;
   display: flex;
   flex-direction: column;
-  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.4);
+  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.5);
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
 }
 
 .response-sidebar.open {
@@ -21,16 +22,18 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 16px;
+  padding: 8px 12px;
   background-color: #252526; /* VS Code header color */
   border-bottom: 1px solid #333333;
+  user-select: none;
 }
 
 .sidebar-header h2 {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   color: #ffffff;
   text-transform: uppercase;
+  font-weight: 400;
   letter-spacing: 1px;
 }
 
@@ -38,96 +41,161 @@
   background: none;
   border: none;
   color: #cccccc;
-  font-size: 20px;
+  font-size: 18px;
   cursor: pointer;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
 }
 
 .close-button:hover {
   color: #ffffff;
+  background-color: #333333;
 }
 
 .sidebar-content {
   flex: 1;
   overflow-y: auto;
-  padding: 10px;
+  padding: 12px;
+  text-align: left;
 }
 
 .no-responses {
+  padding: 24px;
   text-align: center;
   color: #6d6d6d;
-  margin-top: 40px;
   font-style: italic;
+  font-size: 13px;
 }
 
 .response-item {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   background-color: #252526;
   border-radius: 3px;
   overflow: hidden;
+  border: 1px solid #333333;
 }
 
 .response-item h3 {
   margin: 0;
-  padding: 8px 10px;
+  padding: 6px 10px;
   background-color: #2d2d2d;
   color: #cccccc;
   font-size: 12px;
   font-weight: normal;
   border-bottom: 1px solid #333333;
+  user-select: none;
 }
 
 .json-display {
   margin: 0;
-  padding: 10px;
+  padding: 12px;
   background-color: #1e1e1e;
   color: #d4d4d4;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 12px;
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-x: auto;
-  text-align: left; /* Ensure text aligns left */
+  text-align: left;
+  tab-size: 2;
+}
+
+/* JSON Syntax Highlighting - VS Code Theme */
+.json-key {
+  color: #9cdcfe; /* VS Code light blue for keys */
+}
+
+.json-string {
+  color: #ce9178; /* VS Code orange for strings */
+}
+
+.json-number {
+  color: #b5cea8; /* VS Code light green for numbers */
+}
+
+.json-boolean {
+  color: #569cd6; /* VS Code blue for booleans */
+}
+
+.json-null {
+  color: #569cd6; /* VS Code blue for null */
 }
 
 .sidebar-footer {
-  padding: 10px;
+  padding: 8px 12px;
   border-top: 1px solid #333333;
   text-align: right;
+  background-color: #252526;
 }
 
 .clear-button {
   background-color: #4d4d4d;
-  color: #cccccc;
+  color: #ffffff;
   border: none;
-  border-radius: 2px;
+  border-radius: 3px;
   padding: 6px 12px;
-  cursor: pointer;
   font-size: 12px;
-  font-weight: normal;
-  transition: background-color 0.2s;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-family: 'Segoe UI', 'Roboto', sans-serif;
 }
 
 .clear-button:hover {
-  background-color: #007acc; /* VS Code blue */
+  background-color: #5f5f5f;
 }
 
-/* VS Code-like syntax highlighting */
-.json-key {
-  color: #9cdcfe; /* VS Code variable color */
+.toggle-sidebar-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 10px 14px;
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  border: 1px solid #333;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 999;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s ease;
+  font-family: 'Segoe UI', 'Roboto', sans-serif;
 }
 
-.json-string {
-  color: #ce9178; /* VS Code string color */
+.toggle-sidebar-button:hover {
+  background-color: #252526;
+  color: #ffffff;
 }
 
-.json-number {
-  color: #b5cea8; /* VS Code number color */
+/* Responsive Design */
+@media (max-width: 768px) {
+  .response-sidebar {
+    width: 85%;
+    right: -85%;
+  }
 }
 
-.json-boolean {
-  color: #569cd6; /* VS Code keyword color */
-}
-
-.json-null {
-  color: #569cd6; /* VS Code keyword color */
+@media (max-width: 480px) {
+  .response-sidebar {
+    width: 95%;
+    right: -95%;
+  }
+  
+  .sidebar-content {
+    padding: 8px;
+  }
+  
+  .json-display {
+    font-size: 11px;
+  }
+  
+  .toggle-sidebar-button {
+    bottom: 16px;
+    right: 16px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
 } 
