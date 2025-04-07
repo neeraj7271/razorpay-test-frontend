@@ -37,7 +37,7 @@ const Subscriptions = () => {
 
     const fetchSubscriptions = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/admin/subscriptions', {
+            const response = await axios.get('https://razorpay-testing-backend.vercel.app/api/admin/subscriptions', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
@@ -54,7 +54,7 @@ const Subscriptions = () => {
     const handleCancelSubscription = async () => {
         try {
             await axios.post(
-                `http://localhost:5000/admin/subscriptions/${selectedSubscription.id}/cancel`,
+                `https://razorpay-testing-backend.vercel.app/api/admin/subscriptions/${selectedSubscription.id}/cancel`,
                 {},
                 {
                     headers: {

@@ -43,7 +43,7 @@ const Dashboard = () => {
                 params.timeFilter = timeFilter;
             }
 
-            const response = await axios.get('http://localhost:5000/api/admin/dashboard', { params });
+            const response = await axios.get('https://razorpay-testing-backend.vercel.app/api/admin/dashboard', { params });
             setStats(response.data);
         } catch (error) {
             console.error('Error fetching dashboard stats:', error);

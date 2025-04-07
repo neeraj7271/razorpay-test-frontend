@@ -46,7 +46,7 @@ const Plans = () => {
     const fetchPlans = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:5000/api/plans');
+            const response = await axios.get('https://razorpay-testing-backend.vercel.app/api/plans');
             console.log("API response for plans:", response.data);
 
             // Ensure plans is always an array
@@ -74,7 +74,7 @@ const Plans = () => {
     const fetchDiscounts = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:5000/api/discounts');
+            const response = await axios.get('https://razorpay-testing-backend.vercel.app/api/discounts');
             console.log("API response for discounts:", response.data);
 
             // Ensure discounts is always an array
@@ -120,7 +120,7 @@ const Plans = () => {
             if (values.createInRazorpay && !editingPlan) {
                 try {
                     // Create Razorpay plan via our backend
-                    const razorpayResponse = await axios.post('http://localhost:5000/api/razorpay/create-plan', {
+                    const razorpayResponse = await axios.post('https://razorpay-testing-backend.vercel.app/api/razorpay/create-plan', {
                         name: values.name,
                         description: values.description,
                         amount: values.price * 100, // Convert to paise
@@ -156,10 +156,10 @@ const Plans = () => {
 
             // Then save to our database
             if (editingPlan) {
-                await axios.put(`http://localhost:5000/api/plans/${editingPlan._id}`, values);
+                await axios.put(`https://razorpay-testing-backend.vercel.app/api/plans/${editingPlan._id}`, values);
                 message.success('Plan updated successfully');
             } else {
-                await axios.post('http://localhost:5000/api/plans', values);
+                await axios.post('https://razorpay-testing-backend.vercel.app/api/plans', values);
                 message.success('Plan created successfully');
             }
 
@@ -188,7 +188,7 @@ const Plans = () => {
 
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`http://localhost:5000/api/plans/${id}`);
+            await axios.delete(`https://razorpay-testing-backend.vercel.app/api/plans/${id}`);
             message.success('Plan deleted successfully');
             fetchPlans();
         } catch (error) {
@@ -199,10 +199,10 @@ const Plans = () => {
     const handleDiscountSubmit = async (values) => {
         try {
             if (editingDiscount) {
-                await axios.put(`http://localhost:5000/api/discounts/${editingDiscount._id}`, values);
+                await axios.put(`https://razorpay-testing-backend.vercel.app/api/discounts/${editingDiscount._id}`, values);
                 message.success('Discount updated successfully');
             } else {
-                await axios.post('http://localhost:5000/api/discounts', values);
+                await axios.post('https://razorpay-testing-backend.vercel.app/api/discounts', values);
                 message.success('Discount created successfully');
             }
             setDiscountModalVisible(false);
@@ -222,7 +222,7 @@ const Plans = () => {
 
     const handleDeleteDiscount = async (id) => {
         try {
-            await axios.delete(`http://localhost:5000/api/discounts/${id}`);
+            await axios.delete(`https://razorpay-testing-backend.vercel.app/api/discounts/${id}`);
             message.success('Discount deleted successfully');
             fetchDiscounts();
         } catch (error) {

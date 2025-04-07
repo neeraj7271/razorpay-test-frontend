@@ -57,6 +57,8 @@ const UserDashboard = () => {
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [activeSubscription, setActiveSubscription] = useState(null);
     const [subscriptionHistory, setSubscriptionHistory] = useState([]);
+    const [paymentStatus, setPaymentStatus] = useState(null);
+    const [customer, setCustomer] = useState(null);
     const [transactions, setTransactions] = useState([]);
     const [sidebarOpen, setIsSidebarOpen] = useState(false);
     const [apiResponses, setApiResponses] = useState({});
@@ -98,6 +100,35 @@ const UserDashboard = () => {
         };
     }, []);
 
+    // Function to check payment status
+    const checkPaymentStatus = () => {
+        // Guard clause for when customer data or transactions aren't loaded yet
+        if (!customer || !transactions || transactions.length === 0) {
+            setPaymentStatus('unpaid');
+            return;
+        }
+
+        // Use filter instead of reduce
+        const matchedPayments = transactions.filter(transaction =>
+            transaction.customerId === customer?.id
+        );
+
+        console.log("Matched Payments:", matchedPayments);
+
+        // Check if there are any matched payments
+        if (matchedPayments.length > 0) {
+            // Assuming you want to check the status of the first matched payment
+            const payment = matchedPayments[0]; // Get the first matched payment
+            if (payment.status === "captured") {
+                setPaymentStatus('paid');
+            } else {
+                setPaymentStatus('unpaid');
+            }
+        } else {
+            setPaymentStatus('unpaid'); // Default to unpaid if no payments found
+        }
+    };
+
     const fetchUserData = async () => {
         try {
             setLoading(true);
@@ -115,9 +146,14 @@ const UserDashboard = () => {
             }
 
             // Update subscription state
-            setActiveSubscription(userData.activeSubscription);
-            setSubscriptionHistory(userData.subscriptionHistory || []);
-            setTransactions(userData.transactions || []);
+
+            console.log("User data:", userData.data);
+            setActiveSubscription(userData.data.activeSubscription);
+            setSubscriptionHistory(userData.data.subscriptionHistory || []);
+            setTransactions(userData.data.transactions || []);
+            setCustomer(userData.data.customer);
+
+            checkPaymentStatus();
 
             // Store response for debugging
             setApiResponses(prev => ({
@@ -153,24 +189,25 @@ const UserDashboard = () => {
         setLoading(true);
         try {
             // Use the API utility to handle automatic fallbacks
-            const plansData = await api.get('plans');
-            console.log("API response for plans:", plansData);
+            const plans = await axios.get('https://razorpay-testing-backend.vercel.app/api/plans');
+            console.log("API response for plans:", plans);
 
             // Log the exact structure of the response
-            console.log("Plans response structure:", {
-                isArray: Array.isArray(plansData),
-                type: typeof plansData,
-                keys: plansData && typeof plansData === 'object' ? Object.keys(plansData) : [],
-                hasPlans: plansData && plansData.plans ? true : false,
-                hasData: plansData && plansData.data ? true : false
-            });
+            // console.log("Plans response structure:", {
+            //     isArray: Array.isArray(plansData),
+            //     type: typeof plansData,
+            //     keys: plansData && typeof plansData === 'object' ? Object.keys(plansData) : [],
+            //     hasPlans: plansData && plansData.plans ? true : false,
+            //     hasData: plansData && plansData.data ? true : false
+            // });
 
             // Store API response for debugging
             setApiResponses(prev => ({
                 ...prev,
-                'Fetch Plans': plansData
+                'Fetch Plans': plans.data.plans
             }));
 
+            const plansData = plans.data.plans;
             // Make sidebar visible when we get data
             setIsSidebarOpen(true);
 
@@ -180,17 +217,17 @@ const UserDashboard = () => {
             if (Array.isArray(plansData)) {
                 plansArray = plansData;
             }
-            // Check if response.data has a plans or data property
-            else if (plansData && typeof plansData === 'object') {
-                if (plansData.plans) {
-                    plansArray = Array.isArray(plansData.plans) ? plansData.plans : [];
-                } else if (plansData.data) {
-                    plansArray = Array.isArray(plansData.data) ? plansData.data : [];
-                }
-            }
+            // // Check if response.data has a plans or data property
+            // else if (plansData && typeof plansData === 'object') {
+            //     if (plansData.plans) {
+            //         plansArray = Array.isArray(plansData.plans) ? plansData.plans : [];
+            //     } else if (plansData.data) {
+            //         plansArray = Array.isArray(plansData.data) ? plansData.data : [];
+            //     }
+            // }
 
             // Process each plan to ensure it has all needed IDs
-            const processedPlans = plansArray.map(plan => {
+            const processedPlans = plansData.map(plan => {
                 const planId = plan._id || plan.id || plan.planId || plan.razorpayPlanId;
                 return {
                     ...plan,
@@ -220,6 +257,8 @@ const UserDashboard = () => {
             setLoading(false);
         }
     };
+
+
 
     const handlePlanSelection = (plan) => {
         // Don't allow admin to subscribe
@@ -305,17 +344,37 @@ const UserDashboard = () => {
                 contact: user.phone || '1234567890'
             };
 
+            console.log('email: ', customerDetails)
+
             // Check if customer already exists
             let customerId;
             try {
-                const customersResponse = await api.get('/customers', { email: user.email });
-                console.log("Customers response:", customersResponse.data[0].razorpayCustomerId);
-                if (customersResponse && customersResponse.data.length > 0) {
-                    customerId = customersResponse.data[0].razorpayCustomerId; // Assuming the first customer is the one we want
+                const customersResponse = await axios.get('https://razorpay-testing-backend.vercel.app/api/customers', {
+                    params: { email: user.email }
+                });
+                console.log("Customers response:", customersResponse);
+
+                // Check if valid data exists before accessing properties
+                if (customersResponse &&
+                    customersResponse.data &&
+                    Array.isArray(customersResponse.data) &&
+                    customersResponse.data.length > 0 &&
+                    customersResponse.data[0].razorpayCustomerId) {
+
+                    customerId = customersResponse.data[0].razorpayCustomerId;
+                    console.log("Found existing cus tomer ID:", customerId);
+                } else {
+                    console.log("No existing customer found, will crea te new one");
                 }
             } catch (error) {
                 console.error('Error fetching customers:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    status: error.response?.status,
+                    data: error.response?.data
+                });
                 message.error('Failed to check for existing customer. Please try again.');
+                setLoadingStates((prev) => ({ ...prev, [plan.name]: false })); // Ensure loading state is reset
                 return;
             }
 
@@ -329,7 +388,7 @@ const UserDashboard = () => {
                 };
 
                 try {
-                    const createCustomerResponse = await api.post('/create-customer', createCustomerPayload);
+                    const createCustomerResponse = await axios.post('https://razorpay-testing-backend.vercel.app/api/create-customer', createCustomerPayload);
                     console.log("Create customer response:", createCustomerResponse);
                     if (createCustomerResponse && createCustomerResponse.customer) {
                         customerId = createCustomerResponse.razorpayCustomerId; // Get the new customer ID
@@ -353,7 +412,8 @@ const UserDashboard = () => {
                 planId: planId,
                 customerDetails: customerDetails,
                 customerId: customerId, // Use the existing or newly created customer ID
-                totalCount: 12, // Monthly payments for a year
+                totalCount: 12,
+                // startDate: "02-04-2025"// Monthly payments for a year
             };
 
             // Add discount if one is applied
@@ -379,7 +439,7 @@ const UserDashboard = () => {
 
                 // Open Razorpay payment for subscription
                 const options = {
-                    key: 'rzp_test_dWLBx9Ob7rYIdJ', // Replace with your key
+                    key: "",
                     subscription_id: subscription.id,
                     name: 'Your Company',
                     description: `Subscription for ${plan.name} Plan`,
@@ -533,6 +593,8 @@ const UserDashboard = () => {
             return <div className="loading-container"><Spin size="large" /></div>;
         }
 
+        // console.log("Active subscription:", activeSubscription.planId.name);
+
         return (
             <div className="dashboard-content">
                 <h2>Welcome, {user?.name}!</h2>
@@ -542,12 +604,12 @@ const UserDashboard = () => {
                         <Card className="stat-card">
                             <Statistic
                                 title="Current Plan"
-                                value={activeSubscription ? activeSubscription.plan.name : "No Active Plan"}
+                                value={activeSubscription ? activeSubscription.planId.name : "No Active Plan"}
                                 prefix={<AppstoreOutlined />}
                             />
                             {activeSubscription && (
                                 <Tag color="green" style={{ marginTop: 8 }}>
-                                    Active until {new Date(activeSubscription.endDate).toLocaleDateString()}
+                                    Active until {new Date(activeSubscription.currentPeriodEnd).toLocaleDateString()}
                                 </Tag>
                             )}
                         </Card>
@@ -585,20 +647,26 @@ const UserDashboard = () => {
                 {activeSubscription && (
                     <Card title="Current Subscription Details" style={{ marginTop: 24 }}>
                         <Descriptions bordered column={{ xxl: 4, xl: 3, lg: 3, md: 2, sm: 1, xs: 1 }}>
-                            <Descriptions.Item label="Plan">{activeSubscription.plan.name}</Descriptions.Item>
-                            <Descriptions.Item label="Price">₹{activeSubscription.plan.price}/month</Descriptions.Item>
-                            <Descriptions.Item label="Start Date">{new Date(activeSubscription.startDate).toLocaleDateString()}</Descriptions.Item>
-                            <Descriptions.Item label="End Date">{new Date(activeSubscription.endDate).toLocaleDateString()}</Descriptions.Item>
+                            <Descriptions.Item label="Plan">{activeSubscription.planId.name}</Descriptions.Item>
+                            <Descriptions.Item label="Price">₹{activeSubscription.planId.amount}/month</Descriptions.Item>
+                            <Descriptions.Item label="Start Date">
+                                {new Date(activeSubscription.currentPeriodStart).toLocaleDateString()}
+                            </Descriptions.Item>
+
+                            <Descriptions.Item label="End Date">
+                                {new Date(activeSubscription.currentPeriodEnd).toLocaleDateString()
+                                }
+                            </Descriptions.Item>
                             <Descriptions.Item label="Status">
                                 <Tag color="green">Active</Tag>
                             </Descriptions.Item>
                             <Descriptions.Item label="Payment Status">
-                                <Tag color={activeSubscription.paymentStatus === 'paid' ? 'green' : 'gold'}>
-                                    {activeSubscription.paymentStatus.toUpperCase()}
+                                <Tag color={paymentStatus === 'paid' ? 'green' : 'gold'}>
+                                    {paymentStatus}
                                 </Tag>
                             </Descriptions.Item>
                             <Descriptions.Item label="Features" span={3}>
-                                {activeSubscription.plan.features && activeSubscription.plan.features.map((feature, index) => (
+                                {activeSubscription.planId.features && activeSubscription.planId.features.map((feature, index) => (
                                     <Tag color="blue" key={index} style={{ margin: '0 8px 8px 0' }}>
                                         {feature}
                                     </Tag>
@@ -616,6 +684,8 @@ const UserDashboard = () => {
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         return user.role === 'admin';
     };
+
+    console.log("prining the plans", plans);
 
     const renderPlansContent = () => {
         if (loading) {
@@ -653,7 +723,7 @@ const UserDashboard = () => {
                                     title={
                                         <div className="plan-header">
                                             <h3>{plan.name}</h3>
-                                            <div className="plan-price">₹{plan.price}/mo</div>
+                                            <div className="plan-price">{plan.price}/mo</div>
                                         </div>
                                     }
                                 >
@@ -691,7 +761,7 @@ const UserDashboard = () => {
                     ) : (
                         plans.map((plan) => (
                             <Card
-                                key={plan._id || plan.id || Math.random().toString()}
+                                key={plan.planId || plan.id || Math.random().toString()}
                                 className="plan-card"
                                 title={
                                     <div className="plan-header">
@@ -704,9 +774,9 @@ const UserDashboard = () => {
                                         type="primary"
                                         loading={loadingStates[plan.name]}
                                         onClick={() => handlePlanSelection(plan)}
-                                        disabled={activeSubscription && activeSubscription.plan._id === plan._id}
+                                        disabled={activeSubscription && activeSubscription.planId._id === plan.planId}
                                     >
-                                        {activeSubscription && activeSubscription.plan._id === plan._id
+                                        {activeSubscription && activeSubscription.planId._id === plan.planId
                                             ? 'Current Plan'
                                             : 'Subscribe Now'}
                                     </Button>
@@ -720,7 +790,7 @@ const UserDashboard = () => {
                                         </div>
                                     ))}
                                 </div>
-                                {activeSubscription && activeSubscription.plan._id === plan._id && (
+                                {activeSubscription && activeSubscription.planId._id === plan.planId && (
                                     <div className="current-plan-badge">
                                         <Badge.Ribbon text="Current Plan" color="green" />
                                     </div>
@@ -732,6 +802,8 @@ const UserDashboard = () => {
             </div>
         );
     };
+
+    console.log("prining the subscription history", subscriptionHistory);
 
     const renderSubscriptionsContent = () => {
         if (loading) {
@@ -756,8 +828,8 @@ const UserDashboard = () => {
                                 title={
                                     <div className="subscription-header">
                                         <Space>
-                                            <span>{subscription.plan.name}</span>
-                                            {new Date() >= new Date(subscription.endDate) ? (
+                                            <span>{subscription.planId.name}</span>
+                                            {new Date() >= new Date(subscription.currentPeriodEnd) ? (
                                                 <Tag color="red">Expired</Tag>
                                             ) : (
                                                 <Tag color="green">Active</Tag>
@@ -767,12 +839,19 @@ const UserDashboard = () => {
                                 }
                             >
                                 <Descriptions column={{ xxl: 4, xl: 3, lg: 3, md: 2, sm: 1, xs: 1 }}>
-                                    <Descriptions.Item label="Price">₹{subscription.plan.price}/month</Descriptions.Item>
-                                    <Descriptions.Item label="Start Date">{new Date(subscription.startDate).toLocaleDateString()}</Descriptions.Item>
-                                    <Descriptions.Item label="End Date">{new Date(subscription.endDate).toLocaleDateString()}</Descriptions.Item>
+                                    <Descriptions.Item label="Price">₹{subscription.planId.amount}/month</Descriptions.Item>
+                                    <Descriptions.Item label="Start Date">
+                                        {new Date(subscription.currentPeriodStart).toLocaleDateString()
+                                        }
+                                    </Descriptions.Item>
+
+                                    <Descriptions.Item label="End Date">
+                                        {new Date(subscription.currentPeriodEnd).toLocaleDateString()
+                                        }
+                                    </Descriptions.Item>
                                     <Descriptions.Item label="Payment Status">
-                                        <Tag color={subscription.paymentStatus === 'paid' ? 'green' : 'gold'}>
-                                            {subscription.paymentStatus.toUpperCase()}
+                                        <Tag color={paymentStatus === 'captured' ? 'green' : 'gold'}>
+                                            {paymentStatus}
                                         </Tag>
                                     </Descriptions.Item>
                                 </Descriptions>
@@ -815,7 +894,7 @@ const UserDashboard = () => {
                                             transaction.status === 'success' ? 'green' :
                                                 transaction.status === 'pending' ? 'gold' : 'red'
                                         }>
-                                            {transaction.status.toUpperCase()}
+                                            {transaction.status}
                                         </Tag>
                                     </Space>
                                 </div>

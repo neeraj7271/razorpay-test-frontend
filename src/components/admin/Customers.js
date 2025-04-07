@@ -59,7 +59,7 @@ const Customers = () => {
     const fetchCustomers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:5000/api/customers');
+            const response = await axios.get('https://razorpay-testing-backend.vercel.app/api/customers');
             setCustomers(response.data);
         } catch (error) {
             message.error('Failed to fetch customers');
@@ -70,7 +70,7 @@ const Customers = () => {
 
     const fetchPlans = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/plans');
+            const response = await axios.get('https://razorpay-testing-backend.vercel.app/api/plans');
             setPlans(response.data);
         } catch (error) {
             message.error('Failed to fetch plans');
@@ -120,13 +120,13 @@ const Customers = () => {
             // Add customer ID to the request
             values.customerId = selectedCustomer._id;
 
-            const response = await axios.post('http://localhost:5000/api/subscriptions', values);
+            const response = await axios.post('https://razorpay-testing-backend.vercel.app/api/subscriptions', values);
             message.success('Subscription added successfully');
             setAddSubscriptionVisible(false);
             subscriptionForm.resetFields();
 
             // Refresh customer data
-            const updatedCustomer = await axios.get(`http://localhost:5000/api/customers/${selectedCustomer._id}`);
+            const updatedCustomer = await axios.get(`https://razorpay-testing-backend.vercel.app/api/customers/${selectedCustomer._id}`);
             setSelectedCustomer(updatedCustomer.data);
 
             // Refresh customers list

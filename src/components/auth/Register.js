@@ -12,7 +12,7 @@ const Register = () => {
     const onFinish = async (values) => {
         try {
             setLoading(true);
-            const response = await axios.post('http://localhost:5000/api/auth/register', values);
+            const response = await axios.post('https://razorpay-testing-backend.vercel.app/api/auth/register', values);
             console.log(response);
             message.success('Registration successful! Please login.');
             navigate('/login');

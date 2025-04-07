@@ -12,7 +12,7 @@ const Login = () => {
     const onFinish = async (values) => {
         try {
             setLoading(true);
-            const response = await axios.post('http://localhost:5000/api/auth/login', values);
+            const response = await axios.post('https://razorpay-testing-backend.vercel.app/api/auth/login', values);
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('user', JSON.stringify(response.data.user));
             message.success('Login successful!');
